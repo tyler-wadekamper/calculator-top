@@ -43,6 +43,94 @@ class Calculator {
     }
 }
 
+class Engine {
+    constructor(calculator) {
+        this.calculator = calculator;
+        this.operator = null;
+        this.firstNumberString = '';
+        this.secondNumberString = '';
+    }
+
+    evaluate() {
+        let result = this.operator.evaluate();
+        this.calculator.handleResult(result);
+    }
+
+    appendToFirstNumber(newText) {
+        this.firstNumberString += newText;
+    }
+
+    appendToSecondNumber(newText) {
+        this.secondNumberString += newText;
+    }
+
+    removeCharacterFromFirstNumber() {
+        this.firstNumberString = this.firstNumberString.slice(0, -1);
+    }
+
+    removeCharacterFromSecondNumber() {
+        this.secondNumberString = this.secondNumberString.slice(0, -1);
+    }
+}
+
+class Operator {
+    constructor(engine) {
+        this.engine = engine;
+        this.firstNumber = null;
+        this.secondNumber = null;
+    }
+
+    getEngineNumbers() {
+        this.firstNumber = Number(this.engine.firstNumberString);
+        this.secondNumber = Number(this.engine.secondNumberString);
+    }
+}
+
+class Adder extends Operator {
+    constructor(engine) {
+        super(engine);
+    }
+
+    evaluate() {
+        this.getEngineNumbers();
+        return this.firstNumber + this.secondNumber;
+    }
+
+}
+
+class Subtracter extends Operator {
+    constructor(engine) {
+        super(engine);
+    }
+
+    evaluate() {
+        this.getEngineNumbers();
+        return this.firstNumber - this.secondNumber;
+    }
+}
+
+class Multiplier extends Operator {
+    constructor(engine) {
+        super(engine);
+    }
+
+    evaluate() {
+        this.getEngineNumbers();
+        return this.firstNumber * this.secondNumber;
+    }
+}
+
+class Divider extends Operator {
+    constructor(engine) {
+        super(engine);
+    }
+
+    evaluate() {
+        this.getEngineNumbers();
+        return this.firstNumber / this.secondNumber;
+    }
+}
+
 class Keypad {
     constructor(calculator) {
         this.calculator = calculator;
