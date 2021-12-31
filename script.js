@@ -7,23 +7,39 @@ class Container {
     }
 
     handleNumber(number) {
-
+        this.state.handleNumber(number);
     }
 
     handleAdd() {
-
+        this.state.handleAdd();
     }
 
     handleSubtract() {
-
+        this.state.handleSubtract();
     }
 
     handleMultiply() {
-
+        this.state.handleMultiply();
     }
 
     handleDivide() {
+        this.state.handleDivide();
+    }
 
+    handleBack() {
+        this.state.handleBack();
+    }
+
+    handleClear() {
+        this.state.handleClear();
+    }
+
+    handleSubmit() {
+        this.state.handleSubmit();
+    }
+
+    handleResult(result) {
+        this.screen.handleResult(result);
     }
 }
 
