@@ -3,7 +3,7 @@ class Calculator {
         this.screen = new Screen(this);
         this.engine = new Engine(this);
         this.keypad = new Keypad(this);
-        this.state = new State(this);
+        this.state = new EmptyState(this);
     }
 
     handleNumber(number) {
@@ -40,6 +40,140 @@ class Calculator {
 
     handleResult(result) {
         this.screen.handleResult(result);
+    }
+}
+
+class State {
+    constructor(calculator) {
+        this.calculator = calculator;
+        this.screen = calculator.screen;
+        this.engine = calculator.engine;
+    }
+
+    setEmptyState() {
+        this.calculator.state = new EmptyState(this.calculator);
+    }
+
+    setNumberOnlyState() {
+        this.calculator.state = new NumberOnlyState(this.calculator);
+    }
+
+    setNumberOperatorState() {
+        this.calculator.state = new NumberOperatorState(this.calculator);
+    }
+
+    setNumberOperatorNumberState() {
+        this.calculator.state = new NumberOperatorNumberState(this.calculator);
+    }
+
+    handleClear() {
+        this.screen.clear();
+    }
+
+    // Each method exists and does nothing unless overridden
+    handleNumber(number) {return;}
+    handleAdd() {return;}
+    handleSubtract() {return;}
+    handleMultiply() {return;}
+    handleDivide() {return;}
+    handleBack() {return;}
+    handleSubmit() {return;}
+}
+
+class EmptyState extends State {
+    constructor(calculator) {
+        super(calculator);
+    }
+
+    handleNumber(number) {
+        this.screen.appendToCurrentLine(number);
+        this.engine.appendToFirstNumber(number);
+        this.setNumberOnlyState();
+    }
+}
+
+class NumberOnlyState extends State {
+    constructor(calculator) {
+        super(calculator);
+    }
+
+    handleNumber(number) {
+        this.screen.appendToCurrentLine(number);
+        this.engine.appendToFirstNumber(number);
+    }
+
+    handleAdd() {
+        this.screen.appendToCurrentLine('+');
+        this.engine.operator = new Adder(this.engine);
+        this.setNumberOperatorState();
+    }
+
+    handleSubtract() {
+        this.screen.appendToCurrentLine('-');
+        this.engine.operator = new Subtracter(this.engine);
+        this.setNumberOperatorState();
+    }
+
+    handleMultiply() {
+        this.screen.appendToCurrentLine('*');
+        this.engine.operator = new Multiplier(this.engine);
+        this.setNumberOperatorState();
+    }
+
+    handleDivide() {
+        this.screen.appendToCurrentLine('/');
+        this.engine.operator = new Divider(this.engine);
+        this.setNumberOperatorState();
+    }
+
+    handleBack() {
+        this.screen.removeCharacterFromCurrentLine();
+        this.engine.removeCharacterFromFirstNumber();
+        if(this.screen.isEmpty()) {
+            this.setEmptyState();
+        }
+    }
+}
+
+class NumberOperatorState extends State {
+    constructor(calculator) {
+        super(calculator);
+    }
+
+    handleNumber(number) {
+        this.screen.appendToCurrentLine(number);
+        this.engine.appendToSecondNumber(number);
+        this.setNumberOperatorNumberState();
+    }
+
+    handleBack() {
+        this.screen.removeCharacterFromCurrentLine();
+        this.engine.operator = null;
+        this.setNumberOnlyState;
+    }
+}
+
+class NumberOperatorNumberState extends State {
+    constructor(calculator) {
+        super(calculator);
+    }
+
+    handleNumber(number) {
+        this.screen.appendToCurrentLine(number);
+        this.engine.appendToSecondNumber(number);
+    }
+
+    handleBack() {
+        this.screen.removeCharacterFromCurrentLine();
+        this.engine.removeCharacterFromSecondNumber();
+        if(this.screen.endsWithOperator()) {
+            this.setNumberOperatorState();
+        }
+    }
+
+    handleSubmit() {
+        this.engine.evaluate();
+        this.setEmptyState();
     }
 }
 
