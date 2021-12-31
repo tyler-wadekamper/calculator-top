@@ -3,7 +3,7 @@ class Calculator {
         this.screen = new Screen(this);
         this.engine = new Engine(this);
         this.keypad = new Keypad(this);
-        // this.state = new State(this);
+        this.state = new State(this);
     }
 
     handleNumber(number) {
@@ -46,8 +46,12 @@ class Calculator {
 class Screen {
     constructor() {
         this.contentLines = [];
+        this.containerDiv = document.querySelector('.screen');
         this.addEmptyLine();
         this.numberOfLines = 1;
+        this.addRefreshObservers();
+        this.addContentLinesToContainer();
+        this.OPERATORS_LIST = ['+', '-', '/', '*'];
     }
 
     get numberOfLines() {
@@ -62,8 +66,29 @@ class Screen {
         return this.contentLines.slice(-1);
     }
 
+    endsWithOperator() {
+        let lastCharacter = this.currentLine.content.slice(-1);
+        if(this.OPERATORS_LIST.includes(lastCharacter)) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    isEmpty() {
+        let length = this.contentLines.length;
+        let content = this.currentLine.content;
+        if(length == 1 && content == '') {
+            return true;
+        } 
+        else {
+            return false;
+        }
+    }
+    
     addEmptyLine() {
-        this.contentLines.unshift(new ContentLine());
+        this.contentLines.unshift(new ContentLine(this));
     }
 
     clear() {
@@ -92,20 +117,45 @@ class Screen {
         this.topLine.hide();
     }
 
-    refreshScreen() {
+    refresh() {
+        addContentLinesToContainer();
         if(this.contentLines.length > 8) {
             this.removeTopLine();
         }
     }
+
+    addContentLinesToContainer() {
+        this.contentLines.forEach(addLineToContainer);
+    }
+
+    addLineToContainer(contentLine) {
+        contentLine.addToContainer();
+    }
+
+    addContainerObserver() {
+        let observer = new MutationObserver(this.refresh);
+        let observeConfig = {attributes: false, childList: true};
+
+        observer.observe(this.containerDiv, observeConfig);
+    }
+
+    addLineObserver(contentLine) {
+        contentLine.addRefreshObserver();
+    }
+
+    addRefreshObservers() {
+        this.addContainerObserver();
+        this.contentLines.forEach(addLineObserver);
+    }
 }
 
 class ContentLine {
-    constructor(containerDiv) {
-        this.containerDiv = containerDiv;
+    constructor(screen) {
+        this.screen = screen;
+        this.containerDiv = this.screen.containerDiv;
         this.element = document.createElement('div');
         this.element.classList.add('screen-content');
         this.content = '';
-        this.addToContainer();
     }
 
     set content(newContent) {
@@ -134,6 +184,13 @@ class ContentLine {
 
     hide() {
         this.element.classList.add('hidden');
+    }
+
+    addRefreshObserver() {
+        let observer = new MutationObserver(this.screen.refresh);
+        let observeConfig = {attributes: true, childList: false};
+
+        observer.observe(this.element, observeConfig);
     }
 }
 
