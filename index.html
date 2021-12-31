@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RETRO CALC</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2&family=Lato:ital@1&family=Press+Start+2P&display=swap" rel="stylesheet"> 
+</head>
+<body>
+    <div class="main-container">
+        <div class="screen"></div>    
+        <div class="keys-container">
+            <div class="name-container">RETRO CALC</div>
+            <div class="left-keys-section">
+                <button class="button number black-button"  data-value="7">7</button>
+                <button class="button number black-button"  data-value="8">8</button>
+                <button class="button number black-button"  data-value="9">9</button>
+                <button class="button number black-button"  data-value="4">4</button>
+                <button class="button number black-button"  data-value="5">5</button>
+                <button class="button number black-button"  data-value="6">6</button>
+                <button class="button number black-button"  data-value="1">1</button>
+                <button class="button number black-button"  data-value="2">2</button>
+                <button class="button number black-button"  data-value="3">3</button>
+                <button class="button number black-button"  data-value="0">0</button>
+                <button class="button number black-button"  data-value=".">.</button>
+                <button class="button submit black-button"  data-value="submit">=</button>
+            </div>
+            <div class="right-keys-section">
+                <div class="pink-container clear-container">
+                    <button class="button control pink-button clear-button" data-value="clear"></button>
+                    <div class="pink-label">CLEAR</div>
+                </div>
+                <div class="pink-container back-container">
+                    <button class="button control pink-button back-button" data-value="back"></button>
+                    <div class="pink-label">BACK</div>
+                </div>
+            </div>
+            <div class="bottom-keys-section">
+                <div class="grey-container">
+                    <button class="button operator grey-button"  data-value="add" data-symbol="+"></button>
+                    <div class="grey-label">+</div>
+                </div>
+                <div class="grey-container">
+                    <button class="button operator grey-button"  data-value="subtract" data-symbol="-"></button>
+                    <div class="grey-label">–</div>
+                </div>
+                <div class="grey-container">
+                    <button class="button operator grey-button"  data-value="multiply" data-symbol="*"></button>
+                    <div class="grey-label">x</div>
+                </div>
+                <div class="grey-container">
+                    <button class="button operator grey-button"  data-value="divide" data-symbol="/"></button>
+                    <div class="grey-label">÷</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/dot-matrix-lcd@1.0.0/dist/index.min.js"></script>    -->
+    <script src="script.js" defer></script> 
+</body>
+</html>
