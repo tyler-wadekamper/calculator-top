@@ -1,26 +1,55 @@
+class Container {
+    constructor() {
+        this.screen = new Screen(this);
+        this.engine = new Engine(this);
+        this.keypad = new Keypad(this);
+        this.state = new State(this);
+    }
+
+    handleNumber(number) {
+
+    }
+
+    handleAdd() {
+
+    }
+
+    handleSubtract() {
+
+    }
+
+    handleMultiply() {
+
+    }
+
+    handleDivide() {
+
+    }
+}
+
 class Stack {
     constructor() {
-        this.contents = [];
+        this._contents = [];
     }
 
     push(newItem) {
-        this.contents.unshift(newItem);
+        this._contents.unshift(newItem);
     }
 
     pop() {
-        return this.contents.shift();
+        return this._contents.shift();
     }
 
     peek() {
-        return this.contents[0];
+        return this._contents[0];
     }
 
     length() {
-        return this.contents.length;
+        return this._contents.length;
     }
 
     map(callBack) {
-        return this.contents.map(callBack);
+        this._contents = this._contents.map(callBack);
+        return this;
     }
-
 }
