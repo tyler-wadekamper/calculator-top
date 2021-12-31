@@ -43,6 +43,10 @@ body {
     word-wrap: break-word;
 }
 
+.hidden {
+    display: none;
+}
+
 .name-container {
     font-family: 'Lato', sans-serif;
     color: #3D3A86;

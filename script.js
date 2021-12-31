@@ -1,6 +1,6 @@
 class Calculator {
     constructor() {
-        // this.screen = new Screen(this);
+        this.screen = new Screen(this);
         this.engine = new Engine(this);
         this.keypad = new Keypad(this);
         // this.state = new State(this);
@@ -40,6 +40,100 @@ class Calculator {
 
     handleResult(result) {
         this.screen.handleResult(result);
+    }
+}
+
+class Screen {
+    constructor() {
+        this.contentLines = [];
+        this.addEmptyLine();
+        this.numberOfLines = 1;
+    }
+
+    get numberOfLines() {
+        return this.contentLines.length;
+    }
+
+    get currentLine() {
+        return this.contentLines[0];
+    }
+
+    get topLine() {
+        return this.contentLines.slice(-1);
+    }
+
+    addEmptyLine() {
+        this.contentLines.unshift(new ContentLine());
+    }
+
+    clear() {
+        this.contentLines.forEach(removeContentLine);
+        this.addEmptyLine();
+    }
+
+    removeContentLine(contentLine) {
+        contentLine.removeFromContainer();
+    }
+
+    appendToCurrentLine(newText) {
+        this.currentLine.appendText(newText);
+    }
+
+    removeCharacterFromCurrentLine() {
+        this.currentLine.removeCharacter();
+    }
+
+    handleResult(result) {
+        this.addEmptyLine();
+        this.appendToCurrentLine(result);
+    }
+
+    hideTopLine() {
+        this.topLine.hide();
+    }
+
+    refreshScreen() {
+        if(this.contentLines.length > 8) {
+            this.removeTopLine();
+        }
+    }
+}
+
+class ContentLine {
+    constructor(containerDiv) {
+        this.containerDiv = containerDiv;
+        this.element = document.createElement('div');
+        this.element.classList.add('screen-content');
+        this.content = '';
+        this.addToContainer();
+    }
+
+    set content(newContent) {
+        this.element.innerText = newContent;
+    }
+
+    get content() {
+        return this.element.innerText;
+    }
+
+    addToContainer() {
+        this.containerDiv.appendChild(this.element);
+    }
+
+    appendText(newText) {
+        this.content += newText;
+    }
+
+    removeFromContainer() {
+        this.containerDiv.removeChild(this.element);
+    }
+
+    removeCharacter() {
+        this.content = this.content.slice(0, -1);
+    }
+
+    hide() {
+        this.element.classList.add('hidden');
     }
 }
 
@@ -314,33 +408,6 @@ class SubmitButton extends KeypadButton {
 
     handleMouseDown() {
         this.keypad.sendSubmit();
-    }
-}
-
-class Stack {
-    constructor() {
-        this._contents = [];
-    }
-
-    push(newItem) {
-        this._contents.unshift(newItem);
-    }
-
-    pop() {
-        return this._contents.shift();
-    }
-
-    peek() {
-        return this._contents[0];
-    }
-
-    length() {
-        return this._contents.length;
-    }
-
-    map(callBack) {
-        this._contents = this._contents.map(callBack);
-        return this;
     }
 }
 
