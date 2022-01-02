@@ -37,10 +37,6 @@ class Calculator {
     handleSubmit() {
         this.state.handleSubmit();
     }
-
-    handleResult(result) {
-        this.screen.handleResult(result);
-    }
 }
 
 class State {
@@ -66,8 +62,14 @@ class State {
         this.calculator.state = new NumberOperatorNumberState(this.calculator);
     }
 
+    setResultState() {
+        this.calculator.state = new ResultState(this.calculator)
+    }
+
     handleClear() {
         this.screen.clear();
+        this.engine.reset();
+        this.setEmptyState();
     }
 
     // Each method exists and does nothing unless overridden
@@ -149,13 +151,14 @@ class NumberOperatorState extends State {
     handleBack() {
         this.screen.removeCharacterFromCurrentLine();
         this.engine.operator = null;
-        this.setNumberOnlyState;
+        this.setNumberOnlyState();
     }
 }
 
 class NumberOperatorNumberState extends State {
     constructor(calculator) {
         super(calculator);
+        this.name = 'NumberOperatorNumber';
     }
 
     handleNumber(number) {
@@ -172,7 +175,67 @@ class NumberOperatorNumberState extends State {
     }
 
     handleSubmit() {
-        this.engine.evaluate();
+        let result = this.engine.evaluate();
+        this.screen.addEmptyLine();
+        this.screen.appendToCurrentLine(result);
+        this.setResultState();
+    }
+}
+
+class ResultState extends State {
+    constructor(calculator) {
+        super(calculator);
+        this.name = 'Result';
+    }
+
+    handleNumber(number) {
+        let lastResult = this.engine.lastResult;
+        this.screen.removeContentLine(this.screen.currentLine);
+        this.screen.appendToCurrentLine(`=${lastResult}`);
+        this.screen.addEmptyLine();
+        this.screen.appendToCurrentLine(number);
+        this.engine.firstNumberString = number.toString();
+        this.setNumberOnlyState();
+    }
+
+    handleAdd() {
+        this.screen.appendToCurrentLine('+');
+        this.engine.operator = new Adder(this.engine);
+        this.setNumberOperatorState();
+    }
+
+    handleSubtract() {
+        this.screen.appendToCurrentLine('-');
+        this.engine.operator = new Subtracter(this.engine);
+        this.setNumberOperatorState();
+    }
+
+    handleMultiply() {
+        this.screen.appendToCurrentLine('*');
+        this.engine.operator = new Multiplier(this.engine);
+        this.setNumberOperatorState();
+    }
+
+    handleDivide() {
+        this.screen.appendToCurrentLine('/');
+        this.engine.operator = new Divider(this.engine);
+        this.setNumberOperatorState();
+    }
+
+    handleBack() {
+        this.screen.removeCharacterFromCurrentLine();
+        this.engine.removeCharacterFromFirstNumber();
+        if(this.screen.isEmpty()) {
+            this.setEmptyState();
+        }
+    }
+
+    handleSubmit() {
+        this.screen.removeContentLine(this.screen.currentLine);
+        let lastResult = this.engine.lastResult;
+        this.screen.appendToCurrentLine(`=${lastResult}`);
+        this.screen.addEmptyLine();
+        this.engine.firstNumberString = '';
         this.setEmptyState();
     }
 }
@@ -182,22 +245,28 @@ class Screen {
         this.contentLines = [];
         this.containerDiv = document.querySelector('.screen');
         this.addEmptyLine();
-        this.numberOfLines = 1;
-        this.addRefreshObservers();
-        this.addContentLinesToContainer();
+        this.addContainerObserver();
         this.OPERATORS_LIST = ['+', '-', '/', '*'];
-    }
-
-    get numberOfLines() {
-        return this.contentLines.length;
     }
 
     get currentLine() {
         return this.contentLines[0];
     }
 
-    get topLine() {
-        return this.contentLines.slice(-1);
+    get topVisibleLine() {
+        return this.visibleLines.slice(-1)[0];
+    }
+
+    get visibleLines() {
+        return this.contentLines.filter(this.isVisible);
+    }
+
+    get previousLine() {
+        return this.contentLines[1];
+    }
+
+    isVisible(contentLine) {
+        return contentLine.isVisible();
     }
 
     endsWithOperator() {
@@ -222,64 +291,59 @@ class Screen {
     }
     
     addEmptyLine() {
-        this.contentLines.unshift(new ContentLine(this));
+        let newLine = new ContentLine(this)
+        this.contentLines.unshift(newLine);        
     }
 
     clear() {
-        this.contentLines.forEach(removeContentLine);
+        this.contentLines.forEach(this.removeContentLine);
         this.addEmptyLine();
+    }
+    
+    clearCurrentLine() {
+        this.currentLine.content = '';
     }
 
     removeContentLine(contentLine) {
         contentLine.removeFromContainer();
+        this.contentLines.filter(line => line !== contentLine);
     }
 
     appendToCurrentLine(newText) {
         this.currentLine.appendText(newText);
+        this.checkLineLength(this.currentLine);
     }
 
     removeCharacterFromCurrentLine() {
         this.currentLine.removeCharacter();
     }
 
-    handleResult(result) {
-        this.addEmptyLine();
-        this.appendToCurrentLine(result);
-    }
-
-    hideTopLine() {
-        this.topLine.hide();
+    hideTopVisibleLine() {
+        this.topVisibleLine.hide();
     }
 
     refresh() {
-        addContentLinesToContainer();
-        if(this.contentLines.length > 8) {
-            this.removeTopLine();
+        let length = this.visibleLines.length;
+        if(length > 8) {
+            this.hideTopVisibleLine();
         }
     }
 
-    addContentLinesToContainer() {
-        this.contentLines.forEach(addLineToContainer);
-    }
-
-    addLineToContainer(contentLine) {
-        contentLine.addToContainer();
+    checkLineLength(contentLine) {
+        let overflow = '';
+        if(contentLine.length > 12) {
+            overflow = contentLine.content[12];
+            contentLine.content = contentLine.content.slice(0, -1);
+            this.addEmptyLine();
+            this.appendToCurrentLine(overflow);
+        }
     }
 
     addContainerObserver() {
-        let observer = new MutationObserver(this.refresh);
+        let observer = new MutationObserver(this.refresh.bind(this));
         let observeConfig = {attributes: false, childList: true};
 
         observer.observe(this.containerDiv, observeConfig);
-    }
-
-    addLineObserver(contentLine) {
-        contentLine.addRefreshObserver();
-    }
-
-    addRefreshObservers() {
-        this.addContainerObserver();
-        this.contentLines.forEach(addLineObserver);
     }
 }
 
@@ -289,6 +353,10 @@ class ContentLine {
         this.containerDiv = this.screen.containerDiv;
         this.element = document.createElement('div');
         this.element.classList.add('screen-content');
+        this.element.classList.add('visible');
+        this.addToContainer();
+        this.observer = new MutationObserver(this.screen.refresh.bind(this.screen));
+        this.observeConfig = {attributes: true, childList: false};
         this.content = '';
     }
 
@@ -300,6 +368,10 @@ class ContentLine {
         return this.element.innerText;
     }
 
+    isVisible() {
+        return this.element.classList.contains('visible');
+    }
+
     addToContainer() {
         this.containerDiv.appendChild(this.element);
     }
@@ -309,7 +381,7 @@ class ContentLine {
     }
 
     removeFromContainer() {
-        this.containerDiv.removeChild(this.element);
+        this.containerDiv.removeChild(this.element);        
     }
 
     removeCharacter() {
@@ -317,14 +389,16 @@ class ContentLine {
     }
 
     hide() {
+        this.element.classList.remove('visible');
         this.element.classList.add('hidden');
     }
 
-    addRefreshObserver() {
-        let observer = new MutationObserver(this.screen.refresh);
-        let observeConfig = {attributes: true, childList: false};
-
+    enableRefreshObserver() {
         observer.observe(this.element, observeConfig);
+    }
+
+    disableRefreshObserver() {
+        observer.disconnect();
     }
 }
 
@@ -334,11 +408,21 @@ class Engine {
         this.operator = null;
         this.firstNumberString = '';
         this.secondNumberString = '';
+        this.lastResult = null;
+    }
+
+    reset() {
+        this.operator = null;
+        this.firstNumberString = '';
+        this.secondNumberString = '';
     }
 
     evaluate() {
-        let result = this.operator.evaluate();
-        this.calculator.handleResult(result);
+        this.lastResult = this.operator.evaluate();
+        this.firstNumberString = this.lastResult.toString();;
+        this.secondNumberString = '';
+        this.operator = null;
+        return this.lastResult;
     }
 
     appendToFirstNumber(newText) {
@@ -380,7 +464,6 @@ class Adder extends Operator {
         this.getEngineNumbers();
         return this.firstNumber + this.secondNumber;
     }
-
 }
 
 class Subtracter extends Operator {
@@ -412,6 +495,9 @@ class Divider extends Operator {
 
     evaluate() {
         this.getEngineNumbers();
+        if(this.secondNumber == 0) {
+            return "ERROR: DIV 0";
+        }
         return this.firstNumber / this.secondNumber;
     }
 }
@@ -517,7 +603,17 @@ class KeypadButton {
     constructor(keypad, element) {
         this.keypad = keypad;
         this.element = element;
+        this.element.addEventListener('mousedown', this.setPressed);
         this.element.addEventListener('mousedown', this.handleMouseDown.bind(this));
+        document.addEventListener('mouseup', this.setUnpressed.bind(this));
+    }
+
+    setPressed() {
+        this.classList.add('pressed');
+    }
+
+    setUnpressed() {
+        this.element.classList.remove('pressed');
     }
 }
 

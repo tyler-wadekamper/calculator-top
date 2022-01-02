@@ -23,7 +23,6 @@ body {
     flex-direction: column;
     justify-content: end;
 }
-
 .screen::before {
     content: " ";
     position: absolute;
@@ -173,7 +172,9 @@ body {
     font-size: 20px;
 }
 
-/* COLORS */
-/* gameboy main color: #d9d3d0  */
-/* screen background: #809f54 */
-/* screen border: #8f8c91 */
+.pressed {
+    position: relative;
+    left: 3px;
+    top: 3px;
+    box-shadow: none;
+}
