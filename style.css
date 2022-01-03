@@ -16,7 +16,6 @@ body {
     display: border-box;
     font-family: 'Press Start 2P', sans-serif;
     color: rgba(0, 0, 0, 0.7);
-    text-align: right;
     align-self: center;
     margin-top: 70px;
     display: flex;

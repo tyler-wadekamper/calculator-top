@@ -44,6 +44,7 @@ class State {
         this.calculator = calculator;
         this.screen = calculator.screen;
         this.engine = calculator.engine;
+        this.keypad = calculator.keypad;
     }
 
     setEmptyState() {
@@ -63,7 +64,19 @@ class State {
     }
 
     setResultState() {
-        this.calculator.state = new ResultState(this.calculator)
+        this.calculator.state = new ResultState(this.calculator);
+    }
+
+    setPeriodOnlyState() {
+        this.calculator.state = new PeriodOnlyState(this.calculator);
+    }
+
+    disablePeriod() {
+        this.keypad.periodButton.disable();
+    }
+
+    enablePeriod() {
+        this.keypad.periodButton.enable();
     }
 
     handleClear() {
@@ -85,12 +98,40 @@ class State {
 class EmptyState extends State {
     constructor(calculator) {
         super(calculator);
+        this.enablePeriod();
     }
 
     handleNumber(number) {
         this.screen.appendToCurrentLine(number);
         this.engine.appendToFirstNumber(number);
         this.setNumberOnlyState();
+        if(number == ".") {
+            this.setPeriodOnlyState();
+        }
+    }
+} 
+
+class PeriodOnlyState extends State {
+    constructor(calculator) {
+        super(calculator);
+        this.disablePeriod();
+    }
+
+    handleNumber(number) {
+        this.screen.appendToCurrentLine(number);
+        this.engine.appendToFirstNumber(number);
+        this.setNumberOnlyState();
+    }
+
+    handleBack() {
+        if(this.screen.currentLine.content.slice(-1) == ".") {
+            this.enablePeriod()
+        }
+        this.screen.removeCharacterFromCurrentLine();
+        this.engine.removeCharacterFromFirstNumber();
+        if(this.screen.isEmpty()) {
+            this.setEmptyState();
+        }
     }
 }
 
@@ -102,6 +143,9 @@ class NumberOnlyState extends State {
     handleNumber(number) {
         this.screen.appendToCurrentLine(number);
         this.engine.appendToFirstNumber(number);
+        if(number == ".") {
+            this.disablePeriod();
+        }
     }
 
     handleAdd() {
@@ -129,6 +173,9 @@ class NumberOnlyState extends State {
     }
 
     handleBack() {
+        if(this.screen.currentLine.content.slice(-1) == ".") {
+            this.enablePeriod()
+        }
         this.screen.removeCharacterFromCurrentLine();
         this.engine.removeCharacterFromFirstNumber();
         if(this.screen.isEmpty()) {
@@ -140,15 +187,22 @@ class NumberOnlyState extends State {
 class NumberOperatorState extends State {
     constructor(calculator) {
         super(calculator);
+        this.enablePeriod();
     }
 
     handleNumber(number) {
         this.screen.appendToCurrentLine(number);
         this.engine.appendToSecondNumber(number);
         this.setNumberOperatorNumberState();
+        if(number == ".") {
+            this.disablePeriod();
+        }
     }
 
     handleBack() {
+        if(this.screen.currentLine.content.slice(-1) == ".") {
+            this.enablePeriod()
+        }
         this.screen.removeCharacterFromCurrentLine();
         this.engine.operator = null;
         this.setNumberOnlyState();
@@ -158,15 +212,21 @@ class NumberOperatorState extends State {
 class NumberOperatorNumberState extends State {
     constructor(calculator) {
         super(calculator);
-        this.name = 'NumberOperatorNumber';
+        this.enablePeriod();
     }
 
     handleNumber(number) {
         this.screen.appendToCurrentLine(number);
         this.engine.appendToSecondNumber(number);
+        if(number == ".") {
+            this.disablePeriod();
+        }
     }
 
     handleBack() {
+        if(this.screen.currentLine.content.slice(-1) == ".") {
+            this.enablePeriod()
+        }
         this.screen.removeCharacterFromCurrentLine();
         this.engine.removeCharacterFromSecondNumber();
         if(this.screen.endsWithOperator()) {
@@ -185,7 +245,7 @@ class NumberOperatorNumberState extends State {
 class ResultState extends State {
     constructor(calculator) {
         super(calculator);
-        this.name = 'Result';
+        this.enablePeriod();
     }
 
     handleNumber(number) {
@@ -196,6 +256,9 @@ class ResultState extends State {
         this.screen.appendToCurrentLine(number);
         this.engine.firstNumberString = number.toString();
         this.setNumberOnlyState();
+        if(number == ".") {
+            this.disablePeriod();
+        }
     }
 
     handleAdd() {
@@ -223,6 +286,9 @@ class ResultState extends State {
     }
 
     handleBack() {
+        if(this.screen.currentLine.content.slice(-1) == ".") {
+            this.enablePeriod()
+        }
         this.screen.removeCharacterFromCurrentLine();
         this.engine.removeCharacterFromFirstNumber();
         if(this.screen.isEmpty()) {
@@ -296,7 +362,7 @@ class Screen {
     }
 
     clear() {
-        this.contentLines.forEach(this.removeContentLine);
+        this.contentLines.forEach(this.removeContentLine.bind(this));
         this.addEmptyLine();
     }
     
@@ -306,7 +372,7 @@ class Screen {
 
     removeContentLine(contentLine) {
         contentLine.removeFromContainer();
-        this.contentLines.filter(line => line !== contentLine);
+        this.contentLines = this.contentLines.filter(line => line !== contentLine);
     }
 
     appendToCurrentLine(newText) {
@@ -331,9 +397,9 @@ class Screen {
 
     checkLineLength(contentLine) {
         let overflow = '';
-        if(contentLine.length > 12) {
-            overflow = contentLine.content[12];
-            contentLine.content = contentLine.content.slice(0, -1);
+        if(contentLine.content.length > 12) {
+            overflow = contentLine.content.slice(12);
+            contentLine.content = contentLine.content.slice(0, 12);
             this.addEmptyLine();
             this.appendToCurrentLine(overflow);
         }
@@ -506,6 +572,7 @@ class Keypad {
     constructor(calculator) {
         this.calculator = calculator;
         this.buttonCreator = new ButtonCreator(this);
+        this.periodButton = null;
         this.buttonCreator.createButtons();
     }
 
@@ -568,6 +635,10 @@ class ButtonCreator {
     }
 
     createNumberButton(element) {
+        if(element.innerText == '.') {
+            this.keypad.periodButton = new NumberButton(this.keypad, element);
+            return;
+        }
         new NumberButton(this.keypad, element);
     }
 
@@ -606,6 +677,7 @@ class KeypadButton {
         this.element.addEventListener('mousedown', this.setPressed);
         this.element.addEventListener('mousedown', this.handleMouseDown.bind(this));
         document.addEventListener('mouseup', this.setUnpressed.bind(this));
+        this.element.classList.add('enabled');
     }
 
     setPressed() {
@@ -614,6 +686,16 @@ class KeypadButton {
 
     setUnpressed() {
         this.element.classList.remove('pressed');
+    }
+
+    disable() {
+        this.element.classList.add('disabled');
+        this.element.classList.remove('enabled');
+    }
+
+    enable() {
+        this.element.classList.add('enabled');
+        this.element.classList.remove('disabled');
     }
 }
 
@@ -624,7 +706,9 @@ class NumberButton extends KeypadButton {
     
     handleMouseDown() {
         let buttonNumber = this.element.dataset.value;
-        this.keypad.sendNumber(buttonNumber);
+        if(this.element.classList.contains('enabled'))  {
+            this.keypad.sendNumber(buttonNumber);
+        }
     }
 }
 
